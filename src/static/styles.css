@@ -142,3 +142,51 @@ footer {
   padding: 20px;
   color: #666;
 }
+
+.participants {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.participants strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #1a237e;
+}
+
+/* Keep bullets but style list items as soft chips */
+.participants ul {
+  padding-left: 20px; /* keep default bullet position */
+  margin: 0;
+}
+
+.participants ul.empty li {
+  color: #666;
+  font-style: italic;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Styled list items that still show bullets */
+.participants li {
+  display: list-item;
+  list-style-position: inside; /* nicer alignment with chip styling */
+  margin-bottom: 8px;
+  background-color: #eef4ff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #d6e4ff;
+  color: #0b3b7a;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* slightly smaller text on very small screens */
+@media (max-width: 400px) {
+  .participants li {
+    font-size: 13px;
+    padding: 5px 8px;
+  }
+}
