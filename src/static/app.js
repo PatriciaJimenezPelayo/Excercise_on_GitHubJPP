@@ -4,6 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  // --- added: simple HTML-escape helper to avoid injection ---
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (s) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s])
+    );
+  }
+  // --- end added ---
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -20,12 +28,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        // --- changed: include a participants section (bulleted list) ---
+        const participants = Array.isArray(details.participants) ? details.participants : [];
+        const participantsHtml =
+          participants.length > 0
+            ? `<div class="participants">
+                 <strong>Participants:</strong>
+                 <ul class="no-bullets">
+                   ${participants.map((p) => `
+                     <li data-email="${escapeHtml(p)}">
+                       <span class="participant-email">${escapeHtml(p)}</span>
+                       <span class="delete-icon" title="Remove participant" style="cursor:pointer; color:#c62828; margin-left:8px; font-weight:bold;">&times;</span>
+                     </li>`).join("")}
+                 </ul>
+               </div>`
+            : `<div class="participants">
+                 <strong>Participants:</strong>
+                 <ul class="empty no-bullets"><li>No participants yet</li></ul>
+               </div>`;
+
         activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
+          <h4>${escapeHtml(name)}</h4>
+          <p>${escapeHtml(details.description)}</p>
+          <p><strong>Schedule:</strong> ${escapeHtml(details.schedule)}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          ${participantsHtml}
         `;
+
+        // Add delete icon event listeners for this activity's participants
+        const ul = activityCard.querySelector("ul.no-bullets");
+        if (ul) {
+          ul.querySelectorAll(".delete-icon").forEach((icon) => {
+            icon.addEventListener("click", async (e) => {
+              const li = icon.closest("li[data-email]");
+              if (!li) return;
+              const email = li.getAttribute("data-email");
+              if (!email) return;
+              if (!confirm(`Unregister ${email} from ${name}?`)) return;
+              try {
+                const response = await fetch(`/activities/${encodeURIComponent(name)}/unregister?email=${encodeURIComponent(email)}`, { method: "DELETE" });
+                const result = await response.json();
+                if (response.ok) {
+                  fetchActivities();
+                  messageDiv.textContent = result.message;
+                  messageDiv.className = "success";
+                } else {
+                  messageDiv.textContent = result.detail || "An error occurred";
+                  messageDiv.className = "error";
+                }
+                messageDiv.classList.remove("hidden");
+                setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+              } catch (error) {
+                messageDiv.textContent = "Failed to unregister participant.";
+                messageDiv.className = "error";
+                messageDiv.classList.remove("hidden");
+                setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+              }
+            });
+          });
+        }
+        // --- end changed ---
 
         activitiesList.appendChild(activityCard);
 
@@ -59,9 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok) {
-        messageDiv.textContent = result.message;
-        messageDiv.className = "success";
-        signupForm.reset();
+  messageDiv.textContent = result.message;
+  messageDiv.className = "success";
+  signupForm.reset();
+  fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
