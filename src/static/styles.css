@@ -1,3 +1,21 @@
+/* Hide bullet points for participant list */
+.participants ul.no-bullets {
+  list-style: none;
+  padding-left: 0;
+}
+
+/* Style for delete icon */
+.delete-icon {
+  margin-left: 8px;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: color 0.2s;
+}
+.delete-icon:hover {
+  color: #a31515;
+}
 * {
   box-sizing: border-box;
   margin: 0;
